@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Seu Amigo X 🎁</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎁</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAF1EC; --ink:#16352A; --muted:#587064; --accent:#B8243E; --accent-ink:#FFFFFF; --gold:#D99A1E;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0E1C16; --ink:#E6F0E9; --muted:#9DB5A8; --accent:#F0657C; --accent-ink:#2A0710; --gold:#F2C35B; color-scheme:dark; }
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Bricolage Grotesque","Segoe UI",system-ui,-apple-system,sans-serif;
+  font-size:17px; line-height:1.5;
+  display:flex; align-items:center; justify-content:center; text-align:center; padding:2rem 1.25rem;
+}
+.box{max-width:440px; width:100%}
+.gift{width:150px; height:150px; margin:0 auto 1.5rem; display:block; overflow:visible}
+.lid{transition:transform .55s cubic-bezier(.3,1.6,.5,1); transform-origin:14px 56px}
+.open .lid{transform:translate(-6px,-30px) rotate(-16deg)}
+.hello{font-size:1.7rem; font-weight:800; margin:0 0 .4rem}
+.sub{color:var(--muted); margin:0 0 1.8rem}
+button{font:inherit; font-weight:600; border:0; border-radius:999px; padding:.9rem 1.8rem; font-size:1.1rem; cursor:pointer; background:var(--accent); color:var(--accent-ink)}
+button:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
+.label{color:var(--muted); margin:0; font-size:1.1rem}
+.name{font-size:clamp(2.3rem,11vw,3.6rem); font-weight:800; line-height:1.05; color:var(--accent); margin:.3rem 0 1.2rem; letter-spacing:-.02em}
+.shh{color:var(--muted); margin:1.5rem 0 0}
+.result{animation:pop .5s ease-out both}
+@keyframes pop{from{opacity:0; transform:scale(.85)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion: reduce){ .lid{transition:none} .result{animation:none} }
+</style>
+</head>
+<body>
+<div class="box">
+  <svg class="gift" id="gift" viewBox="0 0 120 120" aria-hidden="true">
+    <rect x="18" y="54" width="84" height="58" rx="6" style="fill:var(--accent)"/>
+    <rect x="54" y="54" width="12" height="58" style="fill:var(--gold)"/>
+    <g class="lid">
+      <rect x="12" y="38" width="96" height="20" rx="5" style="fill:var(--accent)"/>
+      <rect x="54" y="38" width="12" height="20" style="fill:var(--gold)"/>
+      <path d="M60 38 C44 14 28 24 40 36 Z M60 38 C76 14 92 24 80 36 Z" style="fill:var(--gold)"/>
+    </g>
+  </svg>
+  <p class="hello" id="hello">Amigo X</p>
+  <div id="stage">
+    <p class="sub" id="sub">Seu Amigo X está aqui dentro.</p>
+    <button id="btn">Descobrir quem eu tirei</button>
+  </div>
+  <div id="result" class="result" hidden>
+    <p class="label">Você tirou</p>
+    <p class="name" id="name"></p>
+    <p class="shh">Guarde segredo até o dia da troca! 🤫</p>
+  </div>
+</div>
+<script>
+function keystream(seed, n){
+  let x = (seed ^ 0x9E3779B9) >>> 0 || 1; const out = [];
+  for (let i=0;i<n;i++){ x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; out.push(x & 255); }
+  return out;
+}
+function decodeToken(h){
+  if (!/^[0-9a-f]{10,}$/.test(h) || h.length % 2) return null;
+  try{
+    const seed = parseInt(h.slice(0,8),16);
+    const data = h.slice(8).match(/../g).map(x => parseInt(x,16));
+    const ks = keystream(seed, data.length);
+    const txt = new TextDecoder("utf-8",{fatal:true}).decode(new Uint8Array(data.map((b,i) => b ^ ks[i])));
+    const parts = txt.split("\n");
+    return parts.length === 2 && parts[1] ? parts : null;
+  }catch(e){ return null; }
+}
+const $ = id => document.getElementById(id);
+function route(){
+  const h = location.hash.slice(1);
+  const data = h.startsWith("r") ? decodeToken(h.slice(1)) : null;
+  $("gift").classList.remove("open");
+  $("result").hidden = true;
+  $("stage").hidden = false;
+  if (data){
+    $("hello").textContent = `Oi, ${data[0]}!`;
+    $("sub").textContent = "Seu Amigo X está aqui dentro.";
+    $("btn").hidden = false;
+    $("name").textContent = data[1];
+  } else {
+    $("hello").textContent = "Link incompleto";
+    $("sub").textContent = "Abra o link exatamente como chegou no WhatsApp, ou peça para quem organizou o sorteio reenviar.";
+    $("btn").hidden = true;
+  }
+}
+$("btn").onclick = () => {
+  $("gift").classList.add("open");
+  $("stage").hidden = true;
+  setTimeout(() => { $("result").hidden = false; }, 350);
+};
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>
